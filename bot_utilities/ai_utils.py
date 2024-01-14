@@ -79,20 +79,26 @@ async def search(prompt):
 async def fetch_models():
     return openai.Model.list()
     
-def generate_response(instructions, search, history):
+import openai
+import asyncio
+
+async def generate_response(instructions, search, history):
     if search is not None:
         search_results = search
     elif search is None:
         search_results = "Search feature is disabled"
     messages = [
-            {"role": "system", "name": "instructions", "content": instructions},
-            *history,
-            {"role": "system", "name": "search_results", "content": search_results},
-        ]
-    response = openai.ChatCompletion.create(
+        {"role": "system", "name": "instructions", "content": instructions},
+        *history,
+        {"role": "system", "name": "search_results", "content": search_results},
+    ]
+
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(
         model=config['GPT_MODEL'],
         messages=messages
-    )
+    ))
+
     message = response.choices[0].message.content
     return message
 
